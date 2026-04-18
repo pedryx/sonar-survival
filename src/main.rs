@@ -7,10 +7,10 @@ mod asset_tracking;
 mod audio;
 #[cfg(feature = "dev")]
 mod dev_tools;
+mod game;
 mod menus;
 mod screens;
 mod theme;
-mod game;
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
 

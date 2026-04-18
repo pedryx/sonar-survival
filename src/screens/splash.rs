@@ -38,8 +38,7 @@ pub(super) fn plugin(app: &mut App) {
     // Exit the splash screen early if the player hits escape.
     app.add_systems(
         Update,
-        enter_game_screen
-            .run_if(input_just_pressed(KeyCode::Escape).and(in_state(Screen::Splash))),
+        enter_game_screen.run_if(input_just_pressed(KeyCode::Escape).and(in_state(Screen::Splash))),
     );
 }
 
@@ -148,7 +147,10 @@ fn check_splash_timer(
     }
 }
 
-fn enter_game_screen(resource_handles: Res<ResourceHandles>, mut next_screen: ResMut<NextState<Screen>>) {
+fn enter_game_screen(
+    resource_handles: Res<ResourceHandles>,
+    mut next_screen: ResMut<NextState<Screen>>,
+) {
     if resource_handles.is_all_done() {
         next_screen.set(Screen::Gameplay);
     } else {
