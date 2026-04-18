@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{AppSystems, screens::Screen, theme::prelude::*};
+use crate::{AppSystems, asset_tracking::ResourceHandles, screens::Screen, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     // Spawn splash screen.
@@ -38,7 +38,7 @@ pub(super) fn plugin(app: &mut App) {
     // Exit the splash screen early if the player hits escape.
     app.add_systems(
         Update,
-        enter_title_screen
+        enter_game_screen
             .run_if(input_just_pressed(KeyCode::Escape).and(in_state(Screen::Splash))),
     );
 }
@@ -134,12 +134,24 @@ fn tick_splash_timer(time: Res<Time>, mut timer: ResMut<SplashTimer>) {
     timer.0.tick(time.delta());
 }
 
-fn check_splash_timer(timer: ResMut<SplashTimer>, mut next_screen: ResMut<NextState<Screen>>) {
+fn check_splash_timer(
+    timer: ResMut<SplashTimer>,
+    resource_handles: Res<ResourceHandles>,
+    mut next_screen: ResMut<NextState<Screen>>,
+) {
     if timer.0.just_finished() {
-        next_screen.set(Screen::Title);
+        if resource_handles.is_all_done() {
+            next_screen.set(Screen::Gameplay);
+        } else {
+            next_screen.set(Screen::Loading);
+        }
     }
 }
 
-fn enter_title_screen(mut next_screen: ResMut<NextState<Screen>>) {
-    next_screen.set(Screen::Title);
+fn enter_game_screen(resource_handles: Res<ResourceHandles>, mut next_screen: ResMut<NextState<Screen>>) {
+    if resource_handles.is_all_done() {
+        next_screen.set(Screen::Gameplay);
+    } else {
+        next_screen.set(Screen::Loading);
+    }
 }
