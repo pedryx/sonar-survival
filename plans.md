@@ -8,9 +8,8 @@
 [X] revealed outlines
 
 # enemies
-[ ] HP + damage
+[X] enemies move to player
+[X] HP + damage
 [ ] player HP UI
-[ ] enemies move to player
-[ ] enemies deal contact damage to player
 [ ] player can shoot shoot
 [ ] shooting deals damage to enemies

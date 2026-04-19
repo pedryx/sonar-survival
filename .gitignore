@@ -2,3 +2,7 @@
 /target
 # This file contains environment-specific configuration like linker settings
 .cargo/config.toml
+
+# claude code stuff
+.serena
+CLAUDE.md

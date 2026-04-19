@@ -1,11 +1,12 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{AppSystems, PausableSystems, screens::Screen};
+use crate::{AppSystems, PausableSystems, game::combat::Health, screens::Screen};
 
 const PLAYER_Z: f32 = 10.0;
 const PLAYER_SIZE: f32 = 20.0;
 const PLAYER_SPEED: f32 = 300.0;
+const PLAYER_HP: f32 = 10.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_player)
@@ -36,14 +37,7 @@ fn spawn_player(
         MeshMaterial2d(materials.add(Color::Srgba(Srgba::hex("#5d5dff").unwrap()))),
         RigidBody::Kinematic,
         Collider::circle(PLAYER_SIZE),
-    ));
-
-    commands.spawn((
-        Name::new("test circle"),
-        DespawnOnExit(Screen::Gameplay),
-        Transform::from_xyz(128.0, 0.0, PLAYER_Z),
-        Mesh2d(meshes.add(Circle::new(48.0))),
-        MeshMaterial2d(materials.add(Color::Srgba(Srgba::hex("#ffffffff").unwrap()))),
+        Health::new(PLAYER_HP),
     ));
 }
 

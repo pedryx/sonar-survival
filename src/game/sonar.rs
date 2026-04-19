@@ -4,12 +4,12 @@ use crate::{AppSystems, PausableSystems, game::player::Player};
 
 const WAVE_THICKNESS: f32 = 5.0;
 const WAVE_PADDING: f32 = 10.0;
-const WAVE_SPEED: f32 = 400.0;
-const WAVE_COUNT: usize = 3;
+const WAVE_SPEED: f32 = 500.0;
+const WAVE_COUNT: usize = 4;
 const WAVE_MAX_RADIUS: f32 = 1100.0;
 
 const SONAR_Z: f32 = 100.0;
-const SONAR_PERIOD_SECS: f32 = 6.0;
+const SONAR_PERIOD_SECS: f32 = 5.0;
 
 const OUTLINE_DURATION: f32 = 3.0;
 
