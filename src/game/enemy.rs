@@ -48,7 +48,7 @@ fn spawn_enemy(
         Mesh2d(enemy_assets.mesh.clone()),
         MeshMaterial2d(enemy_assets.material.clone()),
         Transform::from_translation(position.extend(ENEMY_Z)),
-        SonarDetectable::default(),
-        // Visibility::Hidden,
+        SonarDetectable::from_radius(ENEMY_SIZE),
+        Visibility::Hidden,
     ));
 }

@@ -4,21 +4,25 @@ use crate::{AppSystems, PausableSystems, game::player::Player};
 
 const WAVE_THICKNESS: f32 = 5.0;
 const WAVE_PADDING: f32 = 10.0;
-const WAVE_SPEED: f32 = 200.0;
-const WAVE_COUNT: usize = 4;
+const WAVE_SPEED: f32 = 400.0;
+const WAVE_COUNT: usize = 3;
 const WAVE_MAX_RADIUS: f32 = 1100.0;
 
 const SONAR_Z: f32 = 100.0;
-const SONAR_PERIOD_SECS: f32 = 3.0;
+const SONAR_PERIOD_SECS: f32 = 6.0;
 
-const OUTLINE_DURATION: f32 = 2.0;
+const OUTLINE_DURATION: f32 = 3.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<WaveMaterial>()
         .init_resource::<WaveSpawner>()
         .add_systems(
             Update,
-            ((spawn_waves, propagate_waves).chain(), apply_outline_ttl)
+            (
+                (spawn_waves, propagate_waves).chain(),
+                show_outlines,
+                hide_outlines,
+            )
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
         );
@@ -50,13 +54,15 @@ impl Default for WaveSpawner {
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
 pub struct SonarDetectable {
-    outline_ttl: Timer,
+    outline_timer: Timer,
+    pub radius: f32,
 }
 
-impl Default for SonarDetectable {
-    fn default() -> Self {
+impl SonarDetectable {
+    pub fn from_radius(radius: f32) -> Self {
         Self {
-            outline_ttl: Timer::from_seconds(OUTLINE_DURATION, TimerMode::Once),
+            outline_timer: Timer::from_seconds(OUTLINE_DURATION, TimerMode::Once),
+            radius,
         }
     }
 }
@@ -117,11 +123,32 @@ fn propagate_waves(
     }
 }
 
-fn apply_outline_ttl(time: Res<Time>, query: Query<(&mut SonarDetectable, &mut Visibility)>) {
-    for (mut detectable, mut visibility) in query {
-        detectable.outline_ttl.tick(time.delta());
+fn show_outlines(
+    waves: Query<(&SonarWave, &Transform)>,
+    mut detectables: Query<(&mut SonarDetectable, &mut Visibility, &Transform)>,
+) {
+    for (wave, wave_transform) in waves {
+        for (mut detectable, mut visibility, detectable_transform) in detectables.iter_mut() {
+            let wave_position = wave_transform.translation.xy();
+            let detectable_position = detectable_transform.translation.xy();
 
-        if detectable.outline_ttl.just_finished() {
+            let distance = wave_position.distance(detectable_position);
+            let inner = wave.radius - WAVE_THICKNESS;
+            let outer = wave.radius;
+
+            if distance + detectable.radius >= inner && distance - detectable.radius <= outer {
+                detectable.outline_timer.reset();
+                *visibility = Visibility::Visible;
+            }
+        }
+    }
+}
+
+fn hide_outlines(time: Res<Time>, query: Query<(&mut SonarDetectable, &mut Visibility)>) {
+    for (mut detectable, mut visibility) in query {
+        detectable.outline_timer.tick(time.delta());
+
+        if detectable.outline_timer.just_finished() {
             *visibility = Visibility::Hidden;
         }
     }

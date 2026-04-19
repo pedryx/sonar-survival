@@ -34,7 +34,7 @@ fn spawn_player(
         Transform::from_xyz(0.0, 0.0, PLAYER_Z),
         Mesh2d(meshes.add(Circle::new(PLAYER_SIZE))),
         MeshMaterial2d(materials.add(Color::Srgba(Srgba::hex("#5d5dff").unwrap()))),
-        RigidBody::Dynamic,
+        RigidBody::Kinematic,
         Collider::circle(PLAYER_SIZE),
     ));
 
