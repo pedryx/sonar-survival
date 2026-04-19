@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use crate::{AppSystems, PausableSystems, screens::Screen};
 
 const PLAYER_Z: f32 = 10.0;
-const PLAYER_SIZE: f32 = 30.0;
+const PLAYER_SIZE: f32 = 20.0;
 const PLAYER_SPEED: f32 = 300.0;
 
 pub(super) fn plugin(app: &mut App) {

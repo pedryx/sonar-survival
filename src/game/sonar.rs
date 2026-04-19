@@ -26,6 +26,15 @@ pub(super) fn plugin(app: &mut App) {
 #[reflect(Resource)]
 struct WaveMaterial(Handle<ColorMaterial>);
 
+impl FromWorld for WaveMaterial {
+    fn from_world(world: &mut World) -> Self {
+        let mut materials = world.resource_mut::<Assets<ColorMaterial>>();
+        let color = materials.add(Color::Srgba(Srgba::hex("#00fff22a").unwrap()));
+
+        Self(color)
+    }
+}
+
 #[derive(Resource, Reflect, Debug)]
 #[reflect(Resource)]
 struct WaveSpawner(Timer);
@@ -40,15 +49,6 @@ impl Default for WaveSpawner {
 #[reflect(Component)]
 struct SonarWave {
     radius: f32,
-}
-
-impl FromWorld for WaveMaterial {
-    fn from_world(world: &mut World) -> Self {
-        let mut materials = world.resource_mut::<Assets<ColorMaterial>>();
-        let color = materials.add(Color::Srgba(Srgba::hex("#00fff22a").unwrap()));
-
-        Self(color)
-    }
 }
 
 fn spawn_waves(
@@ -96,7 +96,7 @@ fn propagate_waves(
 
         *meshes.get_mut(&mesh.0).unwrap() = Annulus::new(wave.radius, wave.radius + WAVE_THICKNESS)
             .mesh()
-            .resolution(128)
+            .resolution(512)
             .into()
     }
 }
