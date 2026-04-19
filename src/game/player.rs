@@ -1,9 +1,14 @@
+use std::f32::consts::FRAC_PI_2;
+
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems,
-    game::combat::{Health, HealthChanged},
+    game::{
+        GameLayer,
+        combat::{ContactDamage, DespawnOnDamageDealt, Health, HealthChanged},
+    },
     screens::Screen,
 };
 
@@ -12,16 +17,23 @@ const PLAYER_SIZE: f32 = 20.0;
 const PLAYER_SPEED: f32 = 300.0;
 const PLAYER_HP: f32 = 10.0;
 
+const SHOOTING_COOLDOWN: f32 = 0.5;
+const BULLET_RADIUS: f32 = 1.0;
+const BULLET_LENGTH: f32 = 9.0;
+const BULLET_Z: f32 = 30.0;
+const BULLET_DAMAGE: f32 = 1.0;
+const BULLET_SPEED: f32 = 600.0;
+
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(update_hp_bar)
+    app.init_resource::<BulletAssets>()
+        .add_observer(update_hp_bar)
         .add_systems(
             OnEnter(Screen::Gameplay),
             (spawn_health_bar, spawn_player).chain(),
         )
         .add_systems(
             Update,
-            (move_player, update_follow_camera)
-                .chain()
+            ((move_player, update_follow_camera).chain(), fire_bullet)
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
         );
@@ -29,7 +41,17 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-pub struct Player;
+pub struct Player {
+    shooting_cooldown_timer: Timer,
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Self {
+            shooting_cooldown_timer: Timer::from_seconds(SHOOTING_COOLDOWN, TimerMode::Once),
+        }
+    }
+}
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
@@ -43,14 +65,35 @@ fn spawn_player(
     commands.spawn((
         Name::new("player"),
         DespawnOnExit(Screen::Gameplay),
-        Player,
+        Player::default(),
         Transform::from_xyz(0.0, 0.0, PLAYER_Z),
         Mesh2d(meshes.add(Circle::new(PLAYER_SIZE))),
         MeshMaterial2d(materials.add(Color::Srgba(Srgba::hex("#5d5dff").unwrap()))),
         RigidBody::Kinematic,
         Collider::circle(PLAYER_SIZE),
         Health::new(PLAYER_HP),
+        GameLayer::Player,
     ));
+}
+
+#[derive(Resource, Reflect, Debug)]
+#[reflect(Resource)]
+struct BulletAssets {
+    mesh: Handle<Mesh>,
+    material: Handle<ColorMaterial>,
+}
+
+impl FromWorld for BulletAssets {
+    fn from_world(world: &mut World) -> Self {
+        Self {
+            mesh: world
+                .resource_mut::<Assets<Mesh>>()
+                .add(Capsule2d::new(BULLET_RADIUS, BULLET_LENGTH)),
+            material: world
+                .resource_mut::<Assets<ColorMaterial>>()
+                .add(Color::Srgba(Srgba::hex("#22ff00ff").unwrap())),
+        }
+    }
 }
 
 fn spawn_health_bar(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -113,4 +156,49 @@ fn move_player(
     let direction = direction.normalize_or_zero();
 
     velocity.0 = direction * PLAYER_SPEED;
+}
+
+fn fire_bullet(
+    mut commands: Commands,
+    time: Res<Time>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    bullet_assets: Res<BulletAssets>,
+    player: Single<(&mut Player, &Transform)>,
+    window: Single<&Window>,
+    camera: Single<(&Camera, &GlobalTransform)>,
+) {
+    let (mut player, player_transform) = player.into_inner();
+    player.shooting_cooldown_timer.tick(time.delta());
+
+    if !mouse.pressed(MouseButton::Left) || !player.shooting_cooldown_timer.is_finished() {
+        return;
+    }
+    player.shooting_cooldown_timer.reset();
+
+    let (camera, camera_transform) = *camera;
+    let Some(viewport_position) = window.cursor_position() else {
+        return;
+    };
+    let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, viewport_position)
+    else {
+        return;
+    };
+
+    let player_pos = player_transform.translation.truncate();
+    let direction = (world_position - player_pos).normalize_or_zero();
+    let angle = direction.to_angle();
+
+    commands.spawn((
+        Name::new("Bullet"),
+        DespawnOnExit(Screen::Gameplay),
+        Mesh2d(bullet_assets.mesh.clone()),
+        MeshMaterial2d(bullet_assets.material.clone()),
+        Transform::from_translation(player_pos.extend(BULLET_Z))
+            .with_rotation(Quat::from_rotation_z(angle - FRAC_PI_2)),
+        RigidBody::Kinematic,
+        Collider::capsule(BULLET_RADIUS, BULLET_LENGTH),
+        LinearVelocity(direction * BULLET_SPEED),
+        ContactDamage::new(BULLET_DAMAGE, GameLayer::Enemy, 0.0),
+        DespawnOnDamageDealt,
+    ));
 }

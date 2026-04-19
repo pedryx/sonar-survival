@@ -23,3 +23,12 @@ impl Default for GameRng {
         Self(StdRng::seed_from_u64(0xDEAD_C0DE))
     }
 }
+
+#[derive(Component, Reflect, Debug, Default, PartialEq)]
+#[reflect(Component)]
+pub enum GameLayer {
+    #[default]
+    Environment,
+    Player,
+    Enemy,
+}

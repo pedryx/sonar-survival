@@ -1,7 +1,7 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{AppSystems, PausableSystems};
+use crate::{AppSystems, PausableSystems, game::GameLayer};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(|event: On<Add, Health>, mut commands: Commands| {
@@ -22,7 +22,7 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-#[require(Collider, CollidingEntities)]
+#[require(Collider, CollidingEntities, GameLayer)]
 pub struct Health {
     pub max: f32,
     pub current: f32,
@@ -47,23 +47,29 @@ pub struct Died(Entity);
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-struct DestroyOnDeath;
+pub struct DespawnOnDeath;
+
+#[derive(Component, Reflect, Debug)]
+#[reflect(Component)]
+pub struct DespawnOnDamageDealt;
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
 #[require(Collider)]
 pub struct ContactDamage {
     pub damage: f32,
+    pub layer: GameLayer,
     cooldown_timer: Timer,
 }
 
 impl ContactDamage {
-    pub fn new(damage: f32, cooldown_secs: f32) -> Self {
+    pub fn new(damage: f32, layer: GameLayer, cooldown_secs: f32) -> Self {
         let mut cooldown_timer = Timer::from_seconds(cooldown_secs, TimerMode::Once);
         cooldown_timer.tick(cooldown_timer.duration());
 
         Self {
             damage,
+            layer,
             cooldown_timer,
         }
     }
@@ -79,8 +85,10 @@ fn kill_entities(mut commands: Commands, query: Query<(Entity, &Health)>) {
     }
 }
 
-fn despawn_dead(event: On<Died>, mut commands: Commands) {
-    commands.entity(event.0).despawn();
+fn despawn_dead(event: On<Died>, query: Query<(), With<DespawnOnDeath>>, mut commands: Commands) {
+    if query.get(event.0).is_ok() {
+        commands.entity(event.0).despawn();
+    }
 }
 
 fn update_damage_cooldown(time: Res<Time>, damagers: Query<&mut ContactDamage>) {
@@ -91,18 +99,26 @@ fn update_damage_cooldown(time: Res<Time>, damagers: Query<&mut ContactDamage>) 
 
 fn apply_contact_damage(
     mut commands: Commands,
-    receivers: Query<(Entity, &mut Health, &CollidingEntities, &Name)>,
-    mut attackers: Query<&mut ContactDamage>,
+    receivers: Query<(Entity, &mut Health, &CollidingEntities, &Name, &GameLayer)>,
+    mut attackers: Query<(&mut ContactDamage, Option<&DespawnOnDamageDealt>)>,
 ) {
-    for (receiver_entity, mut receiver_health, colliding_entities, receiver_name) in receivers {
+    for (receiver_entity, mut receiver_health, colliding_entities, receiver_name, receiver_layer) in
+        receivers
+    {
         if receiver_health.is_dead {
             continue;
         }
 
         for &attacker_entity in colliding_entities.iter() {
-            let Ok(mut attacker_damage) = attackers.get_mut(attacker_entity) else {
+            let Ok((mut attacker_damage, despawn_on_damage_dealt)) =
+                attackers.get_mut(attacker_entity)
+            else {
                 continue;
             };
+
+            if *receiver_layer != attacker_damage.layer {
+                continue;
+            }
 
             if !attacker_damage.cooldown_timer.is_finished() {
                 continue;
@@ -117,6 +133,10 @@ fn apply_contact_damage(
             );
 
             commands.trigger(HealthChanged(receiver_entity));
+
+            if despawn_on_damage_dealt.is_some() {
+                commands.entity(attacker_entity).despawn();
+            }
         }
     }
 }

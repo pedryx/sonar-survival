@@ -3,7 +3,13 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     AppSystems, PausableSystems,
-    game::{GameRng, combat::ContactDamage, player::Player, sonar::SonarDetectable}, screens::Screen,
+    game::{
+        GameLayer, GameRng,
+        combat::{ContactDamage, DespawnOnDeath, Health},
+        player::Player,
+        sonar::SonarDetectable,
+    },
+    screens::Screen,
 };
 
 const ENEMY_SIZE: f32 = 20.0;
@@ -11,6 +17,7 @@ const ENEMY_Z: f32 = 20.0;
 const ENEMY_SPEED: f32 = 80.0;
 const ENEMY_DAMAGE: f32 = 1.0;
 const ENEMY_DAMAGE_COOLDOWN_SECS: f32 = 1.0;
+const ENEMY_HP: f32 = 1.0;
 const OUTLINE_THICKNESS: f32 = 5.0;
 
 pub(super) fn plugin(app: &mut App) {
@@ -71,7 +78,10 @@ fn spawn_enemy(
         Visibility::Hidden,
         RigidBody::Dynamic,
         Collider::circle(ENEMY_SIZE),
-        ContactDamage::new(ENEMY_DAMAGE, ENEMY_DAMAGE_COOLDOWN_SECS),
+        ContactDamage::new(ENEMY_DAMAGE, GameLayer::Player, ENEMY_DAMAGE_COOLDOWN_SECS),
+        Health::new(ENEMY_HP),
+        GameLayer::Enemy,
+        DespawnOnDeath,
     ));
 }
 

@@ -11,5 +11,6 @@
 [X] enemies move to player
 [X] HP + damage
 [X] player HP UI
-[ ] player can shoot
-[ ] shooting deals damage to enemies
+[X] player can shoot
+[X] shooting deals damage to enemies
+[ ] enemies spawns in regular interval
