@@ -4,7 +4,11 @@ use bevy::prelude::*;
 use crate::{AppSystems, PausableSystems};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(despawn_dead).add_systems(
+    app.add_observer(|event: On<Add, Health>, mut commands: Commands| {
+        commands.trigger(HealthChanged(event.entity));
+    })
+    .add_observer(despawn_dead)
+    .add_systems(
         Update,
         (
             (update_damage_cooldown, apply_contact_damage).chain(),
@@ -35,8 +39,11 @@ impl Health {
     }
 }
 
-#[derive(Event, Debug)]
-pub struct Died(pub Entity);
+#[derive(EntityEvent, Debug)]
+pub struct HealthChanged(Entity);
+
+#[derive(EntityEvent, Debug)]
+pub struct Died(Entity);
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
@@ -83,30 +90,33 @@ fn update_damage_cooldown(time: Res<Time>, damagers: Query<&mut ContactDamage>) 
 }
 
 fn apply_contact_damage(
-    query: Query<(&mut Health, &CollidingEntities, &Name)>,
-    mut damagers: Query<&mut ContactDamage>,
+    mut commands: Commands,
+    receivers: Query<(Entity, &mut Health, &CollidingEntities, &Name)>,
+    mut attackers: Query<&mut ContactDamage>,
 ) {
-    for (mut health, colliding_entities, name) in query {
-        if health.is_dead {
+    for (receiver_entity, mut receiver_health, colliding_entities, receiver_name) in receivers {
+        if receiver_health.is_dead {
             continue;
         }
 
-        for &entity in colliding_entities.iter() {
-            let Ok(mut contact_damage) = damagers.get_mut(entity) else {
+        for &attacker_entity in colliding_entities.iter() {
+            let Ok(mut attacker_damage) = attackers.get_mut(attacker_entity) else {
                 continue;
             };
 
-            if !contact_damage.cooldown_timer.is_finished() {
+            if !attacker_damage.cooldown_timer.is_finished() {
                 continue;
             }
 
-            contact_damage.cooldown_timer.reset();
-            health.current -= contact_damage.damage;
+            attacker_damage.cooldown_timer.reset();
+            receiver_health.current -= attacker_damage.damage;
 
             info!(
                 "{} took contact damage, hp: {}/{}",
-                name, health.current, health.max
+                receiver_name, receiver_health.current, receiver_health.max
             );
+
+            commands.trigger(HealthChanged(receiver_entity));
         }
     }
 }

@@ -10,6 +10,6 @@
 # enemies
 [X] enemies move to player
 [X] HP + damage
-[ ] player HP UI
-[ ] player can shoot shoot
+[X] player HP UI
+[ ] player can shoot
 [ ] shooting deals damage to enemies

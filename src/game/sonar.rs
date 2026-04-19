@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{AppSystems, PausableSystems, game::player::Player};
+use crate::{AppSystems, PausableSystems, game::player::Player, screens::Screen};
 
 const WAVE_THICKNESS: f32 = 5.0;
 const WAVE_PADDING: f32 = 10.0;
@@ -91,6 +91,7 @@ fn spawn_waves(
 
         commands.spawn((
             Name::new(format!("Sonar Wave {}", i)),
+            DespawnOnExit(Screen::Gameplay),
             SonarWave { radius },
             Transform::from_translation(player_transform.translation.with_z(SONAR_Z)),
             MeshMaterial2d(sonar_visuals.0.clone()),

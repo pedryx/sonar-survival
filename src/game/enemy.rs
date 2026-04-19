@@ -3,7 +3,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     AppSystems, PausableSystems,
-    game::{GameRng, combat::ContactDamage, player::Player, sonar::SonarDetectable},
+    game::{GameRng, combat::ContactDamage, player::Player, sonar::SonarDetectable}, screens::Screen,
 };
 
 const ENEMY_SIZE: f32 = 20.0;
@@ -62,6 +62,7 @@ fn spawn_enemy(
 
     commands.spawn((
         Name::new("Enemy"),
+        DespawnOnExit(Screen::Gameplay),
         Enemy,
         Mesh2d(enemy_assets.mesh.clone()),
         MeshMaterial2d(enemy_assets.material.clone()),
