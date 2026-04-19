@@ -1,6 +1,6 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::game::{GameRng, player::Player};
+use crate::game::{GameRng, player::Player, sonar::SonarDetectable};
 
 const ENEMY_SIZE: f32 = 20.0;
 const ENEMY_Z: f32 = 20.0;
@@ -48,5 +48,7 @@ fn spawn_enemy(
         Mesh2d(enemy_assets.mesh.clone()),
         MeshMaterial2d(enemy_assets.material.clone()),
         Transform::from_translation(position.extend(ENEMY_Z)),
+        SonarDetectable::default(),
+        // Visibility::Hidden,
     ));
 }

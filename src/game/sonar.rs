@@ -7,16 +7,18 @@ const WAVE_PADDING: f32 = 10.0;
 const WAVE_SPEED: f32 = 200.0;
 const WAVE_COUNT: usize = 4;
 const WAVE_MAX_RADIUS: f32 = 1100.0;
+
 const SONAR_Z: f32 = 100.0;
 const SONAR_PERIOD_SECS: f32 = 3.0;
+
+const OUTLINE_DURATION: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<WaveMaterial>()
         .init_resource::<WaveSpawner>()
         .add_systems(
             Update,
-            (spawn_waves, propagate_waves)
-                .chain()
+            ((spawn_waves, propagate_waves).chain(), apply_outline_ttl)
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
         );
@@ -42,6 +44,20 @@ struct WaveSpawner(Timer);
 impl Default for WaveSpawner {
     fn default() -> Self {
         Self(Timer::from_seconds(SONAR_PERIOD_SECS, TimerMode::Repeating))
+    }
+}
+
+#[derive(Component, Reflect, Debug)]
+#[reflect(Component)]
+pub struct SonarDetectable {
+    outline_ttl: Timer,
+}
+
+impl Default for SonarDetectable {
+    fn default() -> Self {
+        Self {
+            outline_ttl: Timer::from_seconds(OUTLINE_DURATION, TimerMode::Once),
+        }
     }
 }
 
@@ -98,5 +114,15 @@ fn propagate_waves(
             .mesh()
             .resolution(512)
             .into()
+    }
+}
+
+fn apply_outline_ttl(time: Res<Time>, query: Query<(&mut SonarDetectable, &mut Visibility)>) {
+    for (mut detectable, mut visibility) in query {
+        detectable.outline_ttl.tick(time.delta());
+
+        if detectable.outline_ttl.just_finished() {
+            *visibility = Visibility::Hidden;
+        }
     }
 }
