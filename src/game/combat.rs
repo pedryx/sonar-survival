@@ -40,10 +40,10 @@ impl Health {
 }
 
 #[derive(EntityEvent, Debug)]
-pub struct HealthChanged(Entity);
+pub struct HealthChanged(pub Entity);
 
 #[derive(EntityEvent, Debug)]
-pub struct Died(Entity);
+pub struct Died(pub Entity);
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]

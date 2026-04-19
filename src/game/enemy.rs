@@ -65,7 +65,7 @@ impl FromWorld for EnemyAssets {
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
-struct Enemy;
+pub struct Enemy;
 
 fn spawn_enemy(
     mut commands: Commands,

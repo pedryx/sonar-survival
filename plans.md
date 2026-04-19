@@ -16,9 +16,9 @@
 [X] enemies spawns in regular interval
 
 # game over
-[ ] kill count stat
-[ ] time elapsed stat
-[ ] stats UI
+[X] time elapsed stat
+[X] kill count stat
+[X] stats UI
 [ ] "You Died" UI upon player death
 
 # walls
