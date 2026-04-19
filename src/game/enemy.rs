@@ -1,5 +1,5 @@
 use avian2d::prelude::*;
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     AppSystems, PausableSystems,
@@ -20,15 +20,27 @@ const ENEMY_DAMAGE_COOLDOWN_SECS: f32 = 1.0;
 const ENEMY_HP: f32 = 1.0;
 const OUTLINE_THICKNESS: f32 = 5.0;
 
+const SPAWN_PERIOD_SECS: f32 = 2.0;
+
 pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<EnemyAssets>()
-        .add_systems(Update, spawn_enemy.run_if(input_just_pressed(KeyCode::F2)))
+    app.init_resource::<EnemySpawner>()
+        .init_resource::<EnemyAssets>()
         .add_systems(
             Update,
-            follow_player
+            (spawn_enemy, follow_player)
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
         );
+}
+
+#[derive(Resource, Reflect, Debug)]
+#[reflect(Resource)]
+struct EnemySpawner(Timer);
+
+impl Default for EnemySpawner {
+    fn default() -> Self {
+        Self(Timer::from_seconds(SPAWN_PERIOD_SECS, TimerMode::Repeating))
+    }
 }
 
 #[derive(Resource, Reflect, Debug)]
@@ -57,10 +69,17 @@ struct Enemy;
 
 fn spawn_enemy(
     mut commands: Commands,
+    time: Res<Time>,
+    mut enemy_spawner: ResMut<EnemySpawner>,
     enemy_assets: Res<EnemyAssets>,
     mut rng: ResMut<GameRng>,
     player_transform: Single<&Transform, With<Player>>,
 ) {
+    enemy_spawner.0.tick(time.delta());
+    if !enemy_spawner.0.just_finished() {
+        return;
+    }
+
     const MIN_DISTANCE: f32 = 300.0;
     const MAX_DISTANCE: f32 = 700.0;
 
