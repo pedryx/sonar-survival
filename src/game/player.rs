@@ -6,7 +6,10 @@ use bevy::prelude::*;
 use crate::{
     AppSystems, PausableSystems,
     game::{
-        GameLayer, GameStats, combat::{ContactDamage, Death, DespawnOnDamageDealt, DespawnOnDeath, Health, HealthChanged}
+        GameLayer, GameStats,
+        combat::{
+            ContactDamage, Death, DespawnOnDamageDealt, DespawnOnDeath, Health, HealthChanged,
+        },
     },
     screens::Screen,
 };

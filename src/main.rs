@@ -36,6 +36,8 @@ impl Plugin for AppPlugin {
                 .set(WindowPlugin {
                     primary_window: Window {
                         title: "Ld59".to_string(),
+                        resolution: (1280., 720.).into(),
+                        resizable: false,
                         fit_canvas_to_parent: true,
                         ..default()
                     }
