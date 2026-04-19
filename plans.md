@@ -5,4 +5,12 @@
 # sonar
 [X] sonar effect
 [X] sonar mechanic
-[ ] revealed outlines
+[X] revealed outlines
+
+# enemies
+[ ] HP + damage
+[ ] player HP UI
+[ ] enemies move to player
+[ ] enemies deal contact damage to player
+[ ] player can shoot shoot
+[ ] shooting deals damage to enemies
