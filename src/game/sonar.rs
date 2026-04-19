@@ -1,4 +1,4 @@
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::prelude::*;
 
 use crate::{AppSystems, PausableSystems, game::player::Player};
 
@@ -8,13 +8,15 @@ const WAVE_SPEED: f32 = 200.0;
 const WAVE_COUNT: usize = 4;
 const WAVE_MAX_RADIUS: f32 = 1100.0;
 const SONAR_Z: f32 = 100.0;
+const SONAR_PERIOD_SECS: f32 = 3.0;
 
 pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<SonarMaterial>()
-        .add_systems(Update, spawn_waves.run_if(input_just_pressed(KeyCode::F2)))
+    app.init_resource::<WaveMaterial>()
+        .init_resource::<WaveSpawner>()
         .add_systems(
             Update,
-            propagate_waves
+            (spawn_waves, propagate_waves)
+                .chain()
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
         );
@@ -22,7 +24,17 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Resource, Reflect, Debug)]
 #[reflect(Resource)]
-struct SonarMaterial(Handle<ColorMaterial>);
+struct WaveMaterial(Handle<ColorMaterial>);
+
+#[derive(Resource, Reflect, Debug)]
+#[reflect(Resource)]
+struct WaveSpawner(Timer);
+
+impl Default for WaveSpawner {
+    fn default() -> Self {
+        Self(Timer::from_seconds(SONAR_PERIOD_SECS, TimerMode::Repeating))
+    }
+}
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
@@ -30,7 +42,7 @@ struct SonarWave {
     radius: f32,
 }
 
-impl FromWorld for SonarMaterial {
+impl FromWorld for WaveMaterial {
     fn from_world(world: &mut World) -> Self {
         let mut materials = world.resource_mut::<Assets<ColorMaterial>>();
         let color = materials.add(Color::Srgba(Srgba::hex("#00fff22a").unwrap()));
@@ -41,10 +53,17 @@ impl FromWorld for SonarMaterial {
 
 fn spawn_waves(
     mut commands: Commands,
+    time: Res<Time>,
+    sonar_visuals: Res<WaveMaterial>,
+    mut wave_spawner: ResMut<WaveSpawner>,
     mut meshes: ResMut<Assets<Mesh>>,
     player_transform: Single<&Transform, With<Player>>,
-    sonar_visuals: Res<SonarMaterial>,
 ) {
+    wave_spawner.0.tick(time.delta());
+    if !wave_spawner.0.just_finished() {
+        return;
+    }
+
     for i in 0..WAVE_COUNT {
         let radius = (i as f32) * (WAVE_THICKNESS + WAVE_PADDING);
 

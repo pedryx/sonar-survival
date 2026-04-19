@@ -3,6 +3,6 @@
 [X] player, camera, and movement
 
 # sonar
-[ ] sonar effect
-[ ] sonar mechanic
+[X] sonar effect
+[X] sonar mechanic
 [ ] revealed outlines
