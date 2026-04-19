@@ -19,13 +19,13 @@
 [X] time elapsed stat
 [X] kill count stat
 [X] stats UI
-[ ] "You Died" UI upon player death
+[X] "You Died" UI upon player death
 
-# walls
+# environment
+[ ] random stuff on ground
 [ ] randomly spawned walls
 [ ] walls detectable by sonar
 [ ] walls works with collisions
-
 
 # difficulty scaling + bugfixing
 [ ] enemies spawn period increases over time

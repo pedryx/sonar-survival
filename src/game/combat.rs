@@ -43,7 +43,7 @@ impl Health {
 pub struct HealthChanged(pub Entity);
 
 #[derive(EntityEvent, Debug)]
-pub struct Died(pub Entity);
+pub struct Death(pub Entity);
 
 #[derive(Component, Reflect, Debug)]
 #[reflect(Component)]
@@ -81,11 +81,11 @@ fn kill_entities(mut commands: Commands, query: Query<(Entity, &Health)>) {
             continue;
         }
 
-        commands.trigger(Died(entity));
+        commands.trigger(Death(entity));
     }
 }
 
-fn despawn_dead(event: On<Died>, query: Query<(), With<DespawnOnDeath>>, mut commands: Commands) {
+fn despawn_dead(event: On<Death>, query: Query<(), With<DespawnOnDeath>>, mut commands: Commands) {
     if query.get(event.0).is_ok() {
         commands.entity(event.0).despawn();
     }

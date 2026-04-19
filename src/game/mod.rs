@@ -3,7 +3,7 @@ use rand::{SeedableRng, rngs::StdRng};
 
 use crate::{
     AppSystems, PausableSystems,
-    game::{combat::Died, enemy::Enemy},
+    game::{combat::Death, enemy::Enemy},
     screens::Screen,
 };
 
@@ -38,9 +38,10 @@ impl Default for GameRng {
 
 #[derive(Resource, Reflect, Debug, Default)]
 #[reflect(Resource)]
-struct GameStats {
-    kill_count: u32,
-    elapsed_time_secs: f32,
+pub struct GameStats {
+    pub kill_count: u32,
+    pub elapsed_time_secs: f32,
+    pub tracking_enabled: bool,
 }
 
 #[derive(Component, Reflect, Debug, Default, PartialEq)]
@@ -108,6 +109,10 @@ fn update_elapsed_time(
     mut game_stats: ResMut<GameStats>,
     mut timer_ui: Single<&mut Text, With<TimerUI>>,
 ) {
+    if !game_stats.tracking_enabled {
+        return;
+    }
+
     game_stats.elapsed_time_secs += time.delta_secs();
 
     let total_seconds = game_stats.elapsed_time_secs as u32;
@@ -117,11 +122,15 @@ fn update_elapsed_time(
 }
 
 fn update_kill_count(
-    event: On<Died>,
+    event: On<Death>,
     mut game_stats: ResMut<GameStats>,
     enemies: Query<(), With<Enemy>>,
     mut kill_ui: Single<&mut Text, With<KillCountUI>>,
 ) {
+    if !game_stats.tracking_enabled {
+        return;
+    }
+
     if enemies.get(event.0).is_ok() {
         game_stats.kill_count += 1;
         kill_ui.0 = game_stats.kill_count.to_string();

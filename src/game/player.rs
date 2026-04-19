@@ -6,8 +6,7 @@ use bevy::prelude::*;
 use crate::{
     AppSystems, PausableSystems,
     game::{
-        GameLayer,
-        combat::{ContactDamage, DespawnOnDamageDealt, Health, HealthChanged},
+        GameLayer, GameStats, combat::{ContactDamage, Death, DespawnOnDamageDealt, DespawnOnDeath, Health, HealthChanged}
     },
     screens::Screen,
 };
@@ -27,6 +26,7 @@ const BULLET_SPEED: f32 = 600.0;
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<BulletAssets>()
         .add_observer(update_hp_bar)
+        .add_observer(on_player_death)
         .add_systems(
             OnEnter(Screen::Gameplay),
             (spawn_health_bar, spawn_player).chain(),
@@ -73,6 +73,7 @@ fn spawn_player(
         Collider::circle(PLAYER_SIZE),
         Health::new(PLAYER_HP),
         GameLayer::Player,
+        DespawnOnDeath,
     ));
 }
 
@@ -201,4 +202,39 @@ fn fire_bullet(
         ContactDamage::new(BULLET_DAMAGE, GameLayer::Enemy, 0.0),
         DespawnOnDamageDealt,
     ));
+}
+
+fn on_player_death(
+    event: On<Death>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut game_stats: ResMut<GameStats>,
+    query: Query<(), With<Player>>,
+) {
+    if query.get(event.0).is_err() {
+        return;
+    }
+
+    commands.spawn((
+        Name::new("game over ui"),
+        DespawnOnExit(Screen::Gameplay),
+        Text::new("You Died!"),
+        TextFont {
+            font: asset_server.load("fonts/ethnocentric_regular.otf"),
+            font_size: 86.0,
+            ..default()
+        },
+        TextLayout::new_with_justify(Justify::Center),
+        TextColor(Color::Srgba(Srgba::hex("#ff0000ff").unwrap())),
+        Node {
+            position_type: PositionType::Absolute,
+            top: px(300),
+            bottom: px(0),
+            left: px(0),
+            right: px(0),
+            ..default()
+        },
+    ));
+
+    game_stats.tracking_enabled = false;
 }
