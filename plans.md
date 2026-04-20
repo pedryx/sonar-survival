@@ -23,7 +23,7 @@
 
 # environment
 [X] random stuff on ground
-[ ] randomly spawned walls
+[X] randomly spawned walls
 [ ] walls detectable by sonar
 [ ] walls works with collisions
 [ ] border walls

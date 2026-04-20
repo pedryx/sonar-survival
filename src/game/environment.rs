@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use rand::Rng;
 
@@ -8,8 +10,11 @@ const GAME_BOUNDS: Vec2 = Vec2::new(10_000.0, 10_000.0);
 const FLOOR_BLOB_COUNT: usize = 5_000;
 const FLOOR_BLOB_Z: f32 = 0.0;
 
+const WALL_COUNT: usize = 300;
+const WALL_Z: f32 = 10.0;
+
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::Gameplay), spawn_floor_blobs);
+    app.add_systems(OnEnter(Screen::Gameplay), (spawn_floor_blobs, spawn_walls));
 }
 
 fn spawn_floor_blobs(
@@ -28,6 +33,38 @@ fn spawn_floor_blobs(
             Transform::from_translation(position.extend(FLOOR_BLOB_Z)),
             Mesh2d(meshes.add(Circle::new(size))),
             MeshMaterial2d(materials.add(Color::Srgba(Srgba::hex("#222222ff").unwrap()))),
+        ));
+    }
+}
+
+fn spawn_walls(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut rng: ResMut<GameRng>,
+) {
+    for i in 0..WALL_COUNT {
+        let position;
+        loop {
+            let sampled_position = Rectangle::from_size(GAME_BOUNDS).sample_interior(&mut rng.0);
+
+            if sampled_position.distance_squared(Vec2::ZERO) >= 300.0 * 300.0 {
+                position = sampled_position;
+                break;
+            }
+        }
+
+        let width = rng.0.random_range(80.0..300.0);
+        let height = rng.0.random_range(80.0..300.0);
+        let angle = rng.0.random_range(0.0..2.0 * PI);
+
+        commands.spawn((
+            Name::new(format!("wall {}", i)),
+            DespawnOnExit(Screen::Gameplay),
+            Transform::from_translation(position.extend(WALL_Z))
+                .with_rotation(Quat::from_rotation_z(angle)),
+            Mesh2d(meshes.add(Rectangle::new(width, height).to_ring(5.0))),
+            MeshMaterial2d(materials.add(Color::Srgba(Srgba::hex("#ffff00ff").unwrap()))),
         ));
     }
 }
