@@ -10,6 +10,7 @@ use crate::{
         combat::{
             ContactDamage, Death, DespawnOnDamageDealt, DespawnOnDeath, Health, HealthChanged,
         },
+        environment::Wall,
     },
     screens::Screen,
 };
@@ -36,7 +37,11 @@ pub(super) fn plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            ((move_player, update_follow_camera).chain(), fire_bullet)
+            (
+                (move_player, update_follow_camera).chain(),
+                fire_bullet,
+                despawn_bullets_on_wall_hit,
+            )
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
         );
@@ -72,7 +77,7 @@ fn spawn_player(
         Transform::from_xyz(0.0, 0.0, PLAYER_Z),
         Mesh2d(meshes.add(Circle::new(PLAYER_SIZE))),
         MeshMaterial2d(materials.add(Color::Srgba(Srgba::hex("#5d5dff").unwrap()))),
-        RigidBody::Kinematic,
+        RigidBody::Dynamic,
         Collider::circle(PLAYER_SIZE),
         Health::new(PLAYER_HP),
         GameLayer::Player,
@@ -199,12 +204,25 @@ fn fire_bullet(
         MeshMaterial2d(bullet_assets.material.clone()),
         Transform::from_translation(player_pos.extend(BULLET_Z))
             .with_rotation(Quat::from_rotation_z(angle - FRAC_PI_2)),
-        RigidBody::Kinematic,
+        RigidBody::Dynamic,
         Collider::capsule(BULLET_RADIUS, BULLET_LENGTH),
         LinearVelocity(direction * BULLET_SPEED),
         ContactDamage::new(BULLET_DAMAGE, GameLayer::Enemy, 0.0),
         DespawnOnDamageDealt,
+        CollidingEntities::default(),
     ));
+}
+
+fn despawn_bullets_on_wall_hit(
+    mut commands: Commands,
+    bullets: Query<(Entity, &CollidingEntities), With<DespawnOnDamageDealt>>,
+    walls: Query<(), With<Wall>>,
+) {
+    for (entity, colliding) in &bullets {
+        if colliding.iter().any(|&e| walls.contains(e)) {
+            commands.entity(entity).despawn();
+        }
+    }
 }
 
 fn on_player_death(

@@ -20,7 +20,7 @@ const ENEMY_DAMAGE_COOLDOWN_SECS: f32 = 1.0;
 const ENEMY_HP: f32 = 1.0;
 const OUTLINE_THICKNESS: f32 = 5.0;
 
-const SPAWN_PERIOD_SECS: f32 = 2.0;
+const SPAWN_PERIOD_SECS: f32 = 0.50;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<EnemySpawner>()
