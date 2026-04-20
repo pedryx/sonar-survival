@@ -22,10 +22,11 @@
 [X] "You Died" UI upon player death
 
 # environment
-[ ] random stuff on ground
+[X] random stuff on ground
 [ ] randomly spawned walls
 [ ] walls detectable by sonar
 [ ] walls works with collisions
+[ ] border walls
 
 # difficulty scaling + bugfixing
 [ ] enemies spawn period increases over time

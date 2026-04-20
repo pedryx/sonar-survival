@@ -9,6 +9,7 @@ use crate::{
 
 mod combat;
 mod enemy;
+mod environment;
 mod player;
 mod sonar;
 
@@ -24,7 +25,13 @@ pub(super) fn plugin(app: &mut App) {
                 .in_set(AppSystems::Update)
                 .in_set(PausableSystems),
         )
-        .add_plugins((combat::plugin, enemy::plugin, player::plugin, sonar::plugin));
+        .add_plugins((
+            combat::plugin,
+            enemy::plugin,
+            environment::plugin,
+            player::plugin,
+            sonar::plugin,
+        ));
 }
 
 #[derive(Resource, Debug)]
@@ -36,12 +43,22 @@ impl Default for GameRng {
     }
 }
 
-#[derive(Resource, Reflect, Debug, Default)]
+#[derive(Resource, Reflect, Debug)]
 #[reflect(Resource)]
 pub struct GameStats {
     pub kill_count: u32,
     pub elapsed_time_secs: f32,
     pub tracking_enabled: bool,
+}
+
+impl Default for GameStats {
+    fn default() -> Self {
+        Self {
+            kill_count: 0,
+            elapsed_time_secs: 0.0,
+            tracking_enabled: true,
+        }
+    }
 }
 
 #[derive(Component, Reflect, Debug, Default, PartialEq)]
