@@ -4,7 +4,10 @@ use avian2d::prelude::{Collider, RigidBody};
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::{game::{GameRng, sonar::SonarDetectable}, screens::Screen};
+use crate::{
+    game::{GameRng, sonar::SonarDetectable},
+    screens::Screen,
+};
 
 const GAME_BOUNDS: Vec2 = Vec2::new(10_000.0, 10_000.0);
 
